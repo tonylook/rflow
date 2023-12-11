@@ -16,7 +16,7 @@ def release():
     """
     try:
         repo = git.Repo('.')
-        version = version_operations.read_current_version()
+        version = version_operations.read_next_version()
         release_branch = f'release/v{version}'
         repo.git.checkout('HEAD', b=release_branch)
         repo.git.push('origin', release_branch)
@@ -45,20 +45,23 @@ def major():
 @cli.command()
 def fix():
     """
-    Create a fix branch from the current release branch.
+    Create a fix branch from the current release branch based on the next version.
     """
     try:
         repo = git.Repo('.')
         if not git_operations.is_release_branch(repo.active_branch.name):
             click.echo("Fix branches must be created from a release branch.", err=True)
             raise click.Abort()
-        fix_branch = f'fix/{repo.active_branch.name}'
+
+        version = version_operations.read_next_version()
+        fix_branch = f'fix/{version}'
         repo.git.checkout('HEAD', b=fix_branch)
         repo.git.push('origin', fix_branch)
         click.echo(f'Fix branch {fix_branch} created and pushed.')
     except (GitError, Exception) as e:
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
+
 
 @cli.command()
 def init():

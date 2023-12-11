@@ -103,7 +103,7 @@ def test_init_success(mocker):
     mock_branch.name = 'main'
     mock_repo.return_value.active_branch = mock_branch
 
-    mocker.patch('rflow.utils.get_latest_release_version', return_value=semantic_version.Version('1.0.0'))
+    mocker.patch('rflow.version_operations.get_latest_release_version', return_value=semantic_version.Version('1.0.0'))
     mocker.patch('builtins.open', mocker.mock_open())
 
     runner = CliRunner()
@@ -132,7 +132,7 @@ def test_init_failure_no_release_branches(mocker):
     mock_branch.name = 'main'
     mock_repo.return_value.active_branch = mock_branch
 
-    mocker.patch('rflow.utils.get_latest_release_version', return_value=None)
+    mocker.patch('rflow.version_operations.get_latest_release_version', return_value=None)
 
     runner = CliRunner()
     result = runner.invoke(cli, ['init'])

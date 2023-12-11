@@ -12,6 +12,17 @@ def read_current_version():
     except (FileNotFoundError, KeyError):
         raise ValueError("version.info file not found or invalid format")
 
+def read_next_version():
+    """
+    Read the current version from the version.info file.
+    """
+    try:
+        with open('version.info', 'r') as file:
+            version_info = json.load(file)
+        return version_info['nextVersion']
+    except (FileNotFoundError, KeyError):
+        raise ValueError("version.info file not found or invalid format")
+
 def increment_major_version(version):
     """
     Increment the major version.
