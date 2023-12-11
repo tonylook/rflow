@@ -92,5 +92,23 @@ def init():
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
 
+@cli.command()
+def tag():
+    """
+    Create a Git tag from the current version in the version.info file.
+    """
+    try:
+        repo = git.Repo('.')
+        current_version = version_operations.read_current_version()
+
+        tag_name = f'v{current_version}'
+        repo.create_tag(tag_name)
+        repo.git.push('origin', tag_name)
+
+        click.echo(f'Tag {tag_name} created and pushed.')
+    except (GitError, Exception) as e:
+        click.echo(f'Error: {str(e)}', err=True)
+        raise click.Abort()
+
 if __name__ == '__main__':
     cli()

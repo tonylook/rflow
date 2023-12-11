@@ -64,6 +64,24 @@ rflow fix
 ```
 Ensure you're on a release branch when executing this command. The tool will create a new fix branch based on your current release branch.
 
+## Tagging a Release 🏷️
+
+The `rflow tag` command is used to create a Git tag for the current version as specified in the `version.info` file. This is useful for marking releases in your repository.
+
+### When to Use
+
+- Run this command when you are ready to tag a release in your repository.
+- Ensure your repository's `version.info` file has the correct `currentVersion` set for the release.
+
+### How to Use
+
+1. Navigate to the root of your Git repository.
+2. Ensure the `version.info` file has the desired version for tagging.
+3. Run the following command:
+
+   ```bash
+   rflow tag
+   ```
 ## Troubleshooting 🔍
 
 If you encounter any issues while using `rflow`, please check the following:
