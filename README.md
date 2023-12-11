@@ -41,7 +41,12 @@ pytest tests/
 ```
 Ensure you have `pytest` and `pytest-mock` installed in your environment.
 
+## 📘 User Manual
+
+For detailed instructions on how to use `rflow`, please refer to the [MANUAL.md](MANUAL.md) file in this repository. It provides comprehensive guidance on utilizing all the features of `rflow`.
+
 # 🗺️ Development Roadmap
 
 The roadmap of the project is available in the [ROADMAP.md](ROADMAP.md) file within this repository.
+
 
