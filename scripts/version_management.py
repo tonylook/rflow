@@ -31,10 +31,23 @@ def increment_version(version, increment_minor=True):
     return f"{major}.{minor}.{patch}"
 
 
+def get_default_branch():
+    """Determine the default branch name (main or master)."""
+    branches = subprocess.check_output("git branch -r", shell=True).decode().split()
+    if 'origin/main' in branches:
+        return 'main'
+    elif 'origin/master' in branches:
+        return 'master'
+    else:
+        raise ValueError("Default branch (main/master) not found.")
+
+
 def handle_release_branch(release_branch):
-    # Check out main branch and update version.info
-    run_git_command("git checkout main")
-    run_git_command("git pull origin main")
+    default_branch = get_default_branch()
+
+    # Check out default branch (main or master) and update version.info
+    run_git_command(f"git checkout {default_branch}")
+    run_git_command(f"git pull origin {default_branch}")
     with open('version.info', 'r+') as file:
         version_info = json.load(file)
         current_version = version_info['nextVersion']
