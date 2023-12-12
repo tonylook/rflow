@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from click.testing import CliRunner
 from git.exc import GitError
 
-from rflow.rflow import cli
+from rflow.cli import cli
 import semantic_version
 
 

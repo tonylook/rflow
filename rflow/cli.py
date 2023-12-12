@@ -1,13 +1,20 @@
 import json
+import os
+
 import click
 import git
 from rflow import git_operations
 from rflow import version_operations
 from git.exc import GitError
 
-@click.group()
-def cli():
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
+    if ctx.invoked_subcommand is None:
+        click.echo("rflow: try 'rflow --help' for more information")
     pass
+
 
 @cli.command()
 def release():
@@ -25,6 +32,7 @@ def release():
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
 
+
 @cli.command()
 def major():
     """
@@ -41,6 +49,7 @@ def major():
     except GitError as e:
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
+
 
 @cli.command()
 def fix():
@@ -70,27 +79,36 @@ def init():
     This command must be run from the 'main' branch.
     """
     try:
+        # Check if version.info already exists
+        if os.path.exists('version.info'):
+            click.echo("version.info file already exists. Initialization aborted.")
+            return  # Exit the function early
+
         repo = git.Repo('.')
 
         if repo.active_branch.name != 'main':
-            raise ValueError("The 'init' command must be run from the 'main' branch.")
+            click.echo("The 'init' command must be run from the 'main' branch.")
+            raise click.Abort()
 
         latest_version = version_operations.get_latest_release_version(repo)
+
+        # Default to version 1.0.0 if no release branches are found
         if latest_version is None:
-            raise ValueError("No release branches found in the repository.")
+            latest_version = version_operations.init_version()
 
         version_info = {
-            "currentVersion": str(latest_version),
-            "nextVersion": str(latest_version.next_minor())
+            "currentVersion": latest_version,
+            "nextVersion": version_operations.increment_minor_version(latest_version)
         }
 
         with open('version.info', 'w') as file:
             json.dump(version_info, file, indent=4)
 
         click.echo("Initialized version.info with version: " + str(latest_version))
-    except (GitError, ValueError, Exception) as e:
+    except (GitError, Exception) as e:
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
+
 
 @cli.command()
 def tag():
@@ -109,6 +127,7 @@ def tag():
     except (GitError, Exception) as e:
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
+
 
 if __name__ == '__main__':
     cli()

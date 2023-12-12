@@ -65,3 +65,10 @@ def get_latest_release_version(repo):
         return None
 
     return max(versions)  # Return the highest version
+
+def init_version():
+    """
+    Init version.
+    """
+    semver = semantic_version.Version('1.0.0')
+    return str(semver)
