@@ -76,7 +76,7 @@ def fix():
 def init():
     """
     Initialize a version.info file in the current Git repository.
-    This command must be run from the 'main' branch.
+    This command must be run from the 'main/master' branch.
     """
     try:
         # Check if version.info already exists
@@ -86,8 +86,8 @@ def init():
 
         repo = git.Repo('.')
 
-        if repo.active_branch.name != 'main':
-            click.echo("The 'init' command must be run from the 'main' branch.")
+        if repo.active_branch.name not in ['main', 'master']:
+            click.echo("The 'init' command must be run from the 'main' or 'master' branch.")
             raise click.Abort()
 
         latest_version = version_operations.get_latest_release_version(repo)
