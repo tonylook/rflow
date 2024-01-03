@@ -52,9 +52,10 @@ def major():
 
 
 @cli.command()
-def fix():
+@click.argument('pbi_description', type=str)
+def fix(pbi_description):
     """
-    Create a fix branch from the current release branch based on the next version.
+    Create a fix branch from the current release branch with a specified PBI description.
     """
     try:
         repo = git.Repo('.')
@@ -62,8 +63,7 @@ def fix():
             click.echo("Fix branches must be created from a release branch.", err=True)
             raise click.Abort()
 
-        version = version_operations.read_next_version()
-        fix_branch = f'fix/{version}'
+        fix_branch = f'fix/{pbi_description}'
         repo.git.checkout('HEAD', b=fix_branch)
         repo.git.push('origin', fix_branch)
         click.echo(f'Fix branch {fix_branch} created and pushed.')

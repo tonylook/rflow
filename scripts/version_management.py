@@ -56,7 +56,7 @@ def handle_release_branch(release_branch):
     update_version_info('version.info', current_version, next_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Update version.info for new release'")
-    run_git_command("git push origin main")
+    run_git_command(f"git push origin {default_branch}")
 
     # Check out release branch and update version.info
     run_git_command(f"git checkout -b {release_branch}")
