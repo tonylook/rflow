@@ -64,7 +64,7 @@ def get_latest_release_version(repo):
     if not versions:
         return None
 
-    return max(versions)  # Return the highest version
+    return str(max(versions))  # Return the highest version
 
 def init_version():
     """

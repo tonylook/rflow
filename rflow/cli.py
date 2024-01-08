@@ -95,10 +95,12 @@ def init():
         # Default to version 1.0.0 if no release branches are found
         if latest_version is None:
             latest_version = version_operations.init_version()
-
+            next_version = latest_version
+        else:
+            next_version = version_operations.increment_minor_version(latest_version)
         version_info = {
             "currentVersion": latest_version,
-            "nextVersion": version_operations.increment_minor_version(latest_version)
+            "nextVersion": next_version
         }
 
         with open('version.info', 'w') as file:
