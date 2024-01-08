@@ -26,7 +26,7 @@ def release():
         version = version_operations.read_next_version()
         release_branch = f'release/v{version}'
         repo.git.checkout('HEAD', b=release_branch)
-        repo.git.push('origin', release_branch)
+        repo.git.push('--set-upstream', 'origin', release_branch)
         click.echo(f'Release branch {release_branch} created and pushed.')
     except GitError as e:
         click.echo(f'Error: {str(e)}', err=True)
@@ -44,7 +44,7 @@ def major():
         major_version = version_operations.increment_major_version(current_version)
         major_release_branch = f'release/v{major_version}'
         repo.git.checkout('HEAD', b=major_release_branch)
-        repo.git.push('origin', major_release_branch)
+        repo.git.push('--set-upstream', 'origin', major_release_branch)
         click.echo(f'Major release branch {major_release_branch} created and pushed.')
     except GitError as e:
         click.echo(f'Error: {str(e)}', err=True)
@@ -65,7 +65,7 @@ def fix(pbi_description):
 
         fix_branch = f'fix/{pbi_description}'
         repo.git.checkout('HEAD', b=fix_branch)
-        repo.git.push('origin', fix_branch)
+        repo.git.push('--set-upstream', 'origin', fix_branch)
         click.echo(f'Fix branch {fix_branch} created and pushed.')
     except (GitError, Exception) as e:
         click.echo(f'Error: {str(e)}', err=True)
