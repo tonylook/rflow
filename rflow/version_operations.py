@@ -1,116 +1,74 @@
 import json
-import subprocess
-import sys
+import semantic_version
 
-
-def run_git_command(command):
+def read_current_version():
+    """
+    Read the current version from the version.info file.
+    """
     try:
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, text=True)
-        return output.strip()
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing Git command: {e.output.decode()}")
-        sys.exit(1)
+        with open('version.info', 'r') as file:
+            version_info = json.load(file)
+        return version_info['currentVersion']
+    except (FileNotFoundError, KeyError):
+        raise ValueError("version.info file not found or invalid format")
 
-
-def update_version_info(file_path, current_version, next_version):
-    with open(file_path, 'r+') as file:
-        version_info = json.load(file)
-        version_info['currentVersion'] = current_version
-        version_info['nextVersion'] = next_version
-        file.seek(0)
-        json.dump(version_info, file, indent=4)
-        file.truncate()
-
-
-def increment_version(version, increment_minor=True):
-    major, minor, patch = map(int, version.split('.'))
-    if increment_minor:
-        minor += 1
-        patch = 0
-    else:
-        patch += 1
-    return f"{major}.{minor}.{patch}"
-
-
-def get_default_branch():
-    """Determine the default branch name (main or master)."""
-    branches = subprocess.check_output("git branch -r", shell=True).decode().split()
-    if 'origin/main' in branches:
-        return 'main'
-    elif 'origin/master' in branches:
-        return 'master'
-    else:
-        raise ValueError("Default branch (main/master) not found.")
-
-def handle_release_branch(release_branch):
-    default_branch = get_default_branch()
-
-    # Check out default branch (main or master) and update version.info
-    run_git_command(f"git checkout {default_branch}")
-    run_git_command(f"git pull origin {default_branch}")
-    with open('version.info', 'r+') as file:
-        version_info = json.load(file)
-        current_version = version_info['nextVersion']
-        next_version = increment_version(current_version)
-
-    update_version_info('version.info', current_version, next_version)
-    run_git_command("git add version.info")
-    run_git_command("git commit -m 'Update version.info for new release'")
-    run_git_command(f"git push origin {default_branch}")
-
-    # Check out release branch and update version.info
-    run_git_command(f"git checkout {release_branch}")
-    next_patch_version = increment_version(current_version, increment_minor=False)
-    update_version_info('version.info', current_version, next_patch_version)
-    run_git_command("git add version.info")
-    run_git_command("git commit -m 'Prepare release branch with version info'")
-    run_git_command(f"git push origin {release_branch}")
-
-def extract_branch_name(source_branch):
-    if 'release/' in source_branch:
-        return source_branch.partition('release/')[1] + source_branch.partition('release/')[2]
-    elif 'fix/' in source_branch:
-        return source_branch.partition('fix/')[1] + source_branch.partition('fix/')[2]
-    else:
-        raise ValueError(f"Branch name not supported: {source_branch}")
-
-def is_first_commit_in_branch(branch_name):
+def read_next_version():
+    """
+    Read the current version from the version.info file.
+    """
     try:
-        run_git_command("git fetch")
-        full_branch_name = f"origin/{branch_name}"
+        with open('version.info', 'r') as file:
+            version_info = json.load(file)
+        return version_info['nextVersion']
+    except (FileNotFoundError, KeyError):
+        raise ValueError("version.info file not found or invalid format")
 
-        first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
-        last_commit_in_repo = run_git_command("git rev-parse HEAD")
+def increment_major_version(version):
+    """
+    Increment the major version.
+    """
+    semver = semantic_version.Version(version)
+    return str(semver.next_major())
 
-        is_first = first_commit_in_branch == last_commit_in_repo
-        print(f"Is first commit in {branch_name}: {is_first}")
+def increment_minor_version(version):
+    """
+    Increment the minor version.
+    """
+    semver = semantic_version.Version(version)
+    return str(semver.next_minor())
 
-        return is_first
+def increment_patch_version(version):
+    """
+    Increment the patch version.
+    """
+    semver = semantic_version.Version(version)
+    return str(semver.next_patch())
 
-    except Exception as e:
-        print(f"Errore: {e}")
-        sys.exit(1)
+def get_latest_release_version(repo):
+    """
+    Get the version number from the latest release branch in the repository.
+    """
+    release_branches = [branch for branch in repo.branches if branch.name.startswith('release/v')]
+    if not release_branches:
+        return None
 
+    # Extracting version numbers and sorting them
+    versions = []
+    for branch in release_branches:
+        try:
+            version_str = branch.name.split('release/v')[-1]
+            versions.append(semantic_version.Version(version_str))
+        except ValueError:
+            continue  # Ignore branches with invalid version formats
 
-def main():
-    if len(sys.argv) < 3:
-        print("Usage: python version_management.py <command> <branch>")
-        sys.exit(1)
+    if not versions:
+        return None
 
-    command = sys.argv[1]
-    branch = extract_branch_name(sys.argv[2])
+    return str(max(versions))  # Return the highest version
 
-    if not is_first_commit_in_branch(branch):
-        print(f"Not the first commit in {branch}. Exiting script.")
-        return
-    if command == "release":
-        handle_release_branch(branch)
-    elif command == "fix":
-        handle_fix_branch(branch)
-    else:
-        print("Invalid usage.")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-
+def init_version():
+    """
+    Init version.
+    """
+    semver = semantic_version.Version('1.0.0')
+    return str(semver)
