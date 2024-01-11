@@ -111,23 +111,34 @@ def init():
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
 
-
 @cli.command()
 def tag():
     """
-    Create a Git tag from the current version in the version.info file.
+    Create a Git tag from the next version in the version.info file when on master or main branch.
+    Check if there are any open release branches with this version.
     """
     try:
         repo = git.Repo('.')
-        current_version = version_operations.read_current_version()
+        branch_name = repo.active_branch.name
 
-        tag_name = f'v{current_version}'
+        if branch_name in ['master', 'main']:
+            version = version_operations.read_next_version()
+        else:
+            version = version_operations.read_current_version()
+
+        release_branches = [branch for branch in repo.branches if 'release/v' in branch.name]
+        if any(branch.name != branch_name and f'release/v{version}' in branch.name for branch in release_branches):
+            click.echo(f"An existing release branch with version v{version} already exists. "
+                       "Cannot create tag on {branch_name}.")
+            return
+
+        tag_name = f'v{version}'
         repo.create_tag(tag_name)
         repo.git.push('origin', tag_name)
 
         click.echo(f'Tag {tag_name} created and pushed.')
     except (GitError, Exception) as e:
-        click.echo(f'Error: {str(e)}', err=True)
+        click.echo(f'Errore: {str(e)}', err=True)
         raise click.Abort()
 
 

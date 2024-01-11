@@ -5,7 +5,8 @@ import sys
 
 def run_git_command(command):
     try:
-        subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+        output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, text=True)
+        return output.strip()
     except subprocess.CalledProcessError as e:
         print(f"Error executing Git command: {e.output.decode()}")
         sys.exit(1)
@@ -41,7 +42,6 @@ def get_default_branch():
     else:
         raise ValueError("Default branch (main/master) not found.")
 
-
 def handle_release_branch(release_branch):
     default_branch = get_default_branch()
 
@@ -59,53 +59,84 @@ def handle_release_branch(release_branch):
     run_git_command(f"git push origin {default_branch}")
 
     # Check out release branch and update version.info
-    run_git_command(f"git checkout -b {release_branch}")
+    run_git_command(f"git checkout {release_branch}")
     next_patch_version = increment_version(current_version, increment_minor=False)
     update_version_info('version.info', current_version, next_patch_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Prepare release branch with version info'")
     run_git_command(f"git push origin {release_branch}")
 
+def extract_branch_name(source_branch):
+    if 'release/' in source_branch:
+        return source_branch.partition('release/')[1] + source_branch.partition('release/')[2]
+    elif 'fix/' in source_branch:
+        return source_branch.partition('fix/')[1] + source_branch.partition('fix/')[2]
+    else:
+        raise ValueError(f"Branch name not supported: {source_branch}")
 
-def handle_fix_branch(release_branch, fix_branch):
-    # Check out the release branch and update version.info
-    run_git_command(f"git checkout {release_branch}")
-    run_git_command(f"git pull origin {release_branch}")
+def is_first_commit_in_branch(branch_name):
+    try:
+        run_git_command("git fetch")
+        full_branch_name = f"origin/{branch_name}"
+
+        first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
+        last_commit_in_repo = run_git_command("git rev-parse HEAD")
+
+        is_first = first_commit_in_branch == last_commit_in_repo
+        print(f"Is first commit in {branch_name}: {is_first}")
+
+        return is_first
+
+    except Exception as e:
+        print(f"Errore: {e}")
+        sys.exit(1)
+
+def handle_tag(tag_name):
+    # Controlla se il tag è nel branch master o main
+    default_branch = get_default_branch()
+    branches_containing_tag = run_git_command(f"git branch -r --contains {tag_name}").split('\n')
+    if f"origin/{default_branch}" in branches_containing_tag:
+        print(f"Tag {tag_name} found in {default_branch}. Increasing version.")
+        handle_version_increment(default_branch)
+    else:
+        print(f"Tag {tag_name} not in {default_branch}. No versioning actions.")
+
+def handle_version_increment(branch_name):
+    run_git_command(f"git checkout {branch_name}")
+    run_git_command(f"git pull origin {branch_name}")
     with open('version.info', 'r+') as file:
         version_info = json.load(file)
-        next_version = increment_version(version_info['nextVersion'], increment_minor=False)
+        current_version = version_info['nextVersion']
+        next_version = increment_version(current_version)
 
-    # Update version.info in release branch
-    update_version_info('version.info', version_info['currentVersion'], next_version)
+    update_version_info('version.info', current_version, next_version)
     run_git_command("git add version.info")
-    run_git_command("git commit -m 'Increment patch version in release branch'")
-    run_git_command(f"git push origin {release_branch}")
-
-    # Update version.info in fix branch
-    run_git_command(f"git checkout -b {fix_branch} {release_branch}")
-    run_git_command("git add version.info")
-    run_git_command(f"git commit -m 'Sync version info with release branch'")
-    run_git_command(f"git push --set-upstream origin {fix_branch}")
-
+    run_git_command("git commit -m 'Update version.info post-tagging'")
+    run_git_command(f"git push origin {branch_name}")
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python version_management.py <command> [options]")
+    if len(sys.argv) < 3:
+        print("Usage: python version_management.py <command> <ref>")
         sys.exit(1)
 
     command = sys.argv[1]
+    ref = sys.argv[2]
 
-    if command == "release" and len(sys.argv) == 3:
-        release_branch = sys.argv[2]
-        handle_release_branch(release_branch)
-    elif command == "fix" and len(sys.argv) == 4:
-        release_branch = sys.argv[2]
-        fix_branch = sys.argv[3]
-        handle_fix_branch(release_branch, fix_branch)
+    if command == "tag":
+        handle_tag(ref)
+    elif command == "release":
+        branch = extract_branch_name(ref)
+        if not is_first_commit_in_branch(branch):
+            print(f"Not the first commit in {branch}. Exiting script.")
+            return
+        handle_release_branch(branch)
+    elif command == "fix":
+        branch = extract_branch_name(ref)
+        handle_fix_branch(branch)
     else:
         print("Invalid usage.")
         sys.exit(1)
 
-
 if __name__ == "__main__":
     main()
+
