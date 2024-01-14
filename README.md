@@ -48,8 +48,4 @@ For detailed instructions on how to use `rflow`, please refer to the [MANUAL.md]
 
 For detailed instructions on how to automatize versioning with `rflow`, please refer to the [DEVOPS.md](DEVOPS.md) file in this repository. It explains how to prepare your project for a fully automated versioning experience.
 
-# 🗺️ Development Roadmap
-
-The roadmap of the project is available in the [ROADMAP.md](ROADMAP.md) file within this repository.
-
 
