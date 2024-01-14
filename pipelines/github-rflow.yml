@@ -1,0 +1,34 @@
+name: rflow CI
+
+on:
+  push:
+    branches:
+      - 'release/v*'
+      - 'fix/*'
+  pull_request:
+    types: [closed]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Git Config
+        run: |
+          git config user.email "rflow@domain.dev"
+          git config user.name "rflow"
+          git fetch --unshallow
+          git checkout master
+
+      - name: Release branch version update
+        run: python scripts/version_management.py release ${{ github.ref }}
+        if: startsWith(github.ref, 'refs/heads/release/')
+
+      - name: Fix Branch version update
+        run: python scripts/version_management.py fix ${{ github.ref }}
+        if: startsWith(github.ref, 'refs/heads/fix/')
