@@ -1,7 +1,3 @@
-Certainly! I'll revise the `rflow` CLI Tool User Manual to remove references to manually checking the `version.info` file, simplifying the process for users.
-
----
-
 # `rflow` CLI Tool User Manual 📘
 
 Welcome to the `rflow` CLI Tool! This tool automates various tasks in your software version management process. Below are instructions for using the different features available in `rflow`.
