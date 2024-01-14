@@ -1,94 +1,104 @@
+Certainly! I'll revise the `rflow` CLI Tool User Manual to remove references to manually checking the `version.info` file, simplifying the process for users.
+
+---
+
 # `rflow` CLI Tool User Manual 📘
 
-Welcome to the `rflow` CLI Tool! This tool helps automate various tasks in your software version management process. Below you will find instructions on how to use the different features currently available in `rflow`.
+Welcome to the `rflow` CLI Tool! This tool automates various tasks in your software version management process. Below are instructions for using the different features available in `rflow`.
 
 ## Table of Contents 📑
 1. [Installation](#installation-)
-2. [Release Branch Creation](#release-branch-creation-)
-3. [Major Release Branch Creation](#major-release-branch-creation-)
-4. [Fix Branch Creation](#fix-branch-creation-)
-5. [Troubleshooting](#troubleshooting-)
+2. [Initialize Repository](#initialize-repository-)
+3. [Release Branch Creation](#release-branch-creation-)
+4. [Major Release Branch Creation](#major-release-branch-creation-)
+5. [Fix Branch Creation](#fix-branch-creation-)
+6. [Snapshot Creation](#snapshot-creation-)
+7. [Tagging a Release](#tagging-a-release-)
+8. [Troubleshooting](#troubleshooting-)
 
 ## Installation 📥
 
-Before using `rflow`, you need to install it on your system. Follow these steps:
+Before using `rflow`, install it on your system by following these steps:
 
-1. Ensure you have Python installed on your system.
+1. Ensure Python is installed on your system.
 2. Clone the `rflow` repository from GitHub or download the source code.
 3. Navigate to the `rflow` directory and run `pip install .` to install the tool.
 
 ## Initialize Repository 🌱
 
-The `rflow init` command is used to initialize a Git repository for use with the `rflow` tool. This command creates a `version.info` file in the repository, which is essential for managing versions with `rflow`.
+The `rflow init` command initializes a Git repository for use with `rflow`.
 
 ### When to Use
 
-- Run this command when you first set up `rflow` in a new repository.
-- Ensure you're on the main branch before running this command.
+- When setting up `rflow` in a new repository.
 
 ### How to Use
 
-1. Navigate to the root of your Git repository.
-2. Ensure you're on the main branch.
-3. Run the following command:
-```bash
+
+   ```bash
    rflow init
-```
+   ```
 
 ## Release Branch Creation 🚀
 
-To create a release branch:
+Create a release branch after initializing your repository with `rflow init`.
 
-1. Ensure your repository has been initialized with `rflow init`.
-2. Navigate to the root of your Git repository.
-3. Run the following command:
+```bash
+rflow release
+```
 
-   ```bash
-   rflow release
-   ```
 ## Major Release Branch Creation 🌟
 
-To create a major release branch:
+Create a major release branch, which automatically calculates the next major version.
 
 ```bash
 rflow major
 ```
-This command automatically calculates the next major version and creates a corresponding release branch.
 
 ## Fix Branch Creation 🛠️
 
-To create a fix branch from the current release branch:
+Create a fix branch from a specific tag version and bug description.
 
 ```bash
-rflow fix
+rflow fix [tag_version] [bug_description]
 ```
-Ensure you're on a release branch when executing this command. The tool will create a new fix branch based on your current release branch.
 
-## Tagging a Release 🏷️
+## Snapshot Creation 📸
 
-The `rflow tag` command is used to create a Git tag for the current version as specified in the `version.info` file. This is useful for marking releases in your repository.
+The `rflow snap` command creates a snapshot tag, marking the current state of the project with a timestamp.
 
 ### When to Use
 
-- Run this command when you are ready to tag a release in your repository.
-- Ensure your repository's `version.info` file has the correct `currentVersion` set for the release.
+- To mark the current project state for quick rollbacks or references.
+- To put in dev environment the software.
 
 ### How to Use
 
-1. Navigate to the root of your Git repository.
-2. Ensure the `version.info` file has the desired version for tagging.
-3. Run the following command:
+   ```bash
+   rflow snap
+   ```
+
+## Tagging a Release 🏷️
+
+Create a Git tag for the current release using the `rflow tag` command.
+
+### When to Use
+
+- When you're ready to tag a new release in your repository.
+
+### How to Use
 
    ```bash
    rflow tag
    ```
+
 ## Troubleshooting 🔍
 
-If you encounter any issues while using `rflow`, please check the following:
+If you encounter issues:
 
-1. Ensure you're in the correct directory containing the Git repository.
+1. Check that you're in the correct directory containing the Git repository.
 2. Verify that you have the necessary permissions to perform the operations.
-3. Check for any error messages in the console for clues on what went wrong.
-4. For more support, refer to the rflow documentation or contact the development team.
+3. Look for error messages in the console for clues about what might be wrong.
+4. For more support, refer to the `rflow` documentation or contact the development team.
 
-Thank you for using rflow! 🎉
+Thank you for using `rflow`! 🎉

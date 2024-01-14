@@ -1,0 +1,33 @@
+trigger:
+  branches:
+    include:
+      - release/v*
+      - fix/*
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  # Git Config
+  - script: |
+      git config user.email "rflow@domain.dev"
+      git config user.name "rflow"
+      git fetch
+      git checkout master
+    displayName: 'Git Config'
+
+  # Step for handling release branches
+  - script: |
+      python scripts/version_management.py release $(Build.SourceBranch)
+    displayName: 'Release branch version update'
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+
+  # Step for handling fix branches
+  - script: |
+      python scripts/version_management.py fix $(Build.SourceBranch)
+    displayName: 'Fix Branch version update'
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/heads/fix/')
