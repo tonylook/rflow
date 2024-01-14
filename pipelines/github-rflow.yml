@@ -23,7 +23,7 @@ jobs:
           git config user.email "rflow@domain.dev"
           git config user.name "rflow"
           git fetch --unshallow
-          git checkout master
+          git checkout main
 
       - name: Release branch version update
         run: python scripts/version_management.py release ${{ github.ref }}
