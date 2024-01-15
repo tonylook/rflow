@@ -1,4 +1,7 @@
 import json
+import os
+
+import click
 import semantic_version
 
 
@@ -10,6 +13,7 @@ def read_current_version():
     :raises ValueError: If the 'version.info' file is not found or has an invalid format.
     """
     try:
+        check_version_info_exists()
         with open('version.info', 'r') as file:
             version_info = json.load(file)
         return version_info['currentVersion']
@@ -25,6 +29,7 @@ def read_next_version():
     :raises ValueError: If the version.info file is not found or has an invalid format.
     """
     try:
+        check_version_info_exists()
         with open('version.info', 'r') as file:
             version_info = json.load(file)
         return version_info['nextVersion']
@@ -89,6 +94,15 @@ def get_latest_release_version(repo):
         return None
     return str(max(versions))  # Return the highest version
 
+def check_version_info_exists():
+    """
+    Function to check if a 'version.info' exists in the current directory.
+    Raises a FileNotFoundError if 'version.info' does not exist.
+    :return: None
+    """
+    if not os.path.exists('version.info'):
+        click.echo("version.info file does not exist. Please initialize it using 'rflow init'.")
+        raise click.Abort()
 
 def init_version():
     """

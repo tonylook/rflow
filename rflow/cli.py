@@ -142,12 +142,7 @@ def version():
     :return: None
     """
     try:
-        if not os.path.exists('version.info'):
-            click.echo("version.info file does not exist. Please initialize it using 'rflow init'.")
-            raise click.Abort()
-        with open('version.info', 'r') as file:
-            version_info = json.load(file)
-            current_version = version_info.get("currentVersion", "Unknown")
+        current_version = version_operations.read_current_version()
         click.echo(f"Current version: {current_version}")
     except Exception as e:
         click.echo(f'Error: {str(e)}', err=True)
