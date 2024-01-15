@@ -48,4 +48,14 @@ For detailed instructions on how to use `rflow`, please refer to the [MANUAL.md]
 
 For detailed instructions on how to automatize versioning with `rflow`, please refer to the [DEVOPS.md](DEVOPS.md) file in this repository. It explains how to prepare your project for a fully automated versioning experience.
 
+## Known Issues 🐛
 
+Here's a list of known issues we're currently working on in `rflow`. We appreciate your understanding and patience as we work towards resolving them.
+
+### Issue with `rflow tag` on Main/Master Branch
+
+- **Description**: Currently, the `rflow tag` command cannot be used on the main/master branch due to complications in managing automatic versioning for this type of action.
+- **Impact**: This limitation affects the ability to tag releases directly from the main/master branch, which might be a part of some users' standard workflows.
+- **Status**: I'm actively investigating ways to address this issue and hope to provide a solution in future updates. In the meantime, use the `rflow tag` command (as also compliant with Release Flow) on release branches for tagging releases.
+
+I encourage users to report any other issues they encounter on our GitHub issues page to help me continue improving `rflow`.
