@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -22,7 +22,7 @@ jobs:
         run: |
           git config user.email "rflow@domain.dev"
           git config user.name "rflow"
-          git fetch --unshallow
+          git fetch
           git checkout main
 
       - name: Release branch version update
