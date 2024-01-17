@@ -22,7 +22,7 @@ jobs:
         run: |
           git config user.email "rflow@domain.dev"
           git config user.name "rflow"
-          git fetch --unshallow
+          git fetch
           git checkout main
 
       - name: Release branch version update
