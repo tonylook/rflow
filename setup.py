@@ -1,8 +1,18 @@
 from setuptools import setup, find_packages
+import json
+
+default_version = '1.0.0'
+
+try:
+    with open('version.info', 'r') as version_file:
+        version_info = json.load(version_file)
+        current_version = version_info['currentVersion']
+except (FileNotFoundError, KeyError):
+    current_version = default_version
 
 setup(
     name='rflow',
-    version='1.0.0',
+    version=current_version,
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
