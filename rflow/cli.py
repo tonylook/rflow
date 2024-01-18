@@ -158,7 +158,12 @@ def snap():
     """
     try:
         repo = git_operations.initialize_repo()
-        version = version_operations.read_current_version()
+        active_branch = repo.active_branch.name
+        main_branch_name = git_operations.get_main_branch_name(repo)
+        if active_branch == main_branch_name:
+            version = version_operations.read_next_version()
+        else:
+            version = version_operations.read_current_version()
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         snapshot_tag = f'v{version}-{timestamp}'
         repo.create_tag(snapshot_tag)
@@ -167,6 +172,7 @@ def snap():
     except GitError as e:
         click.echo(f'Error: {str(e)}', err=True)
         raise click.Abort()
+
 
 
 @cli.command()
