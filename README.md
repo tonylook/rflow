@@ -68,12 +68,4 @@ Here's a list of known issues we're currently working on in `rflow`. We apprecia
 - **Impact**: This limitation affects the ability to tag releases directly from the main/master branch, which might be a part of some users' standard workflows.
 - **Status**: I'm actively investigating ways to address this issue and hope to provide a solution in future updates. In the meantime, use the `rflow tag` command (as also compliant with Release Flow) on release branches for tagging releases.
 
-### Issue with `rflow major` Command in CI/CD Environments
-
-- **Description**: Currently, there's a bug with the `rflow major` command on the CI side. While the command operates correctly in CLI, creating a branch with the name of the major version, in CI environments it behaves like the `release` command, increasing the minor version instead.
-- **Impact**: This issue affects users who rely on automated CI/CD pipelines for managing major version releases, as it does not correctly increment the major version as expected.
-- **Status**: This discrepancy between CLI and CI behavior is under investigation. I'm working on identifying the cause and implementing a fix. For now, be cautious when using `rflow major` in automated CI/CD workflows and consider manual verification as a temporary workaround.
-
-
-
 I encourage users to report any other issues they encounter on our GitHub issues page to help me continue improving `rflow`.
