@@ -1,6 +1,8 @@
 import json
+import re
 import subprocess
 import sys
+from enum import Enum
 
 
 def run_git_command(command):
@@ -40,21 +42,35 @@ def update_version_info(file_path, current_version, next_version):
         file.truncate()
 
 
-def increment_version(version, increment_minor=True):
+class VersionIncrement(Enum):
+    MAJOR = 'major'
+    MINOR = 'minor'
+    PATCH = 'patch'
+
+
+def increment_version(version, increment_type=VersionIncrement.PATCH):
     """
-    Increment the given version number.
+    Increment the given version number based on the specified type.
 
     :param version: The version number in format 'major.minor.patch'.
-    :param increment_minor: Flag to specify whether to increment the minor version or the patch version.
-                            Defaults to True, which increments the minor version.
+    :param increment_type: An instance of VersionIncrement enum to specify
+                           which part of the version to increment.
+                           Defaults to VersionIncrement.PATCH.
     :return: The incremented version number.
     """
     major, minor, patch = map(int, version.split('.'))
-    if increment_minor:
+
+    if increment_type == VersionIncrement.MAJOR:
+        major += 1
+        minor, patch = 0, 0
+    elif increment_type == VersionIncrement.MINOR:
         minor += 1
         patch = 0
-    else:
+    elif increment_type == VersionIncrement.PATCH:
         patch += 1
+    else:
+        raise ValueError("Invalid increment type. Choose from VersionIncrement enum values.")
+
     return f"{major}.{minor}.{patch}"
 
 
@@ -104,16 +120,21 @@ def handle_release_branch(release_branch):
     default_branch = get_default_branch()
     run_git_command(f"git checkout {default_branch}")
     run_git_command(f"git pull origin {default_branch}")
+    match = re.match(r'release/v(\d+)\.(\d+)\.(\d+)', release_branch)
+    release_major, release_minor, release_patch = map(int, match.groups())
     with open('version.info', 'r+') as file:
         version_info = json.load(file)
         current_version = version_info['nextVersion']
-        next_version = increment_version(current_version)
+        current_major, current_minor, current_patch = map(int, current_version.split('.'))
+        if release_major > current_major:
+            current_version = increment_version(current_version, VersionIncrement.MAJOR)
+        next_version = increment_version(current_version, VersionIncrement.MINOR)
     update_version_info('version.info', current_version, next_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Update version.info for new release'")
     run_git_command(f"git push origin {default_branch}")
     run_git_command(f"git checkout {release_branch}")
-    next_patch_version = increment_version(current_version, increment_minor=False)
+    next_patch_version = increment_version(current_version, VersionIncrement.PATCH)
     update_version_info('version.info', current_version, next_patch_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Prepare release branch with version info'")
@@ -142,19 +163,19 @@ def handle_fix_branch(fix_branch):
     with open('version.info', 'r') as file:
         version_info = json.load(file)
         current_version = version_info['nextVersion']
-        next_version = increment_version(current_version, increment_minor=False)
+        next_patch_version = increment_version(current_version, VersionIncrement.PATCH)
     branch_version = f"{current_version.rsplit('.', 1)[0]}.0"
     # Checkout and update the release branch
     run_git_command(f"git checkout release/v{branch_version}")
     run_git_command(f"git pull origin release/v{branch_version}")
-    update_version_info('version.info', current_version, next_version)
+    update_version_info('version.info', current_version, next_patch_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Update version.info for release branch'")
     run_git_command(f"git push origin release/v{branch_version}")
     # Checkout and update the fix branch
     run_git_command(f"git checkout {fix_branch}")
     run_git_command(f"git pull origin {fix_branch}")
-    update_version_info('version.info', current_version, next_version)
+    update_version_info('version.info', current_version, next_patch_version)
     run_git_command("git add version.info")
     run_git_command("git commit -m 'Prepare fix branch with version info'")
     run_git_command(f"git push origin {fix_branch}")
@@ -180,35 +201,19 @@ def extract_branch_name(source_branch):
 
 def is_first_commit_in_branch(branch_name):
     """
-    Check if the branch is the first commit on GitHub and if it is an 'initial commit'.
-    :param branch_name: The name of the branch to check.
-    :return: True if it's the first commit on GitHub with no differences from main, False otherwise.
+    :param branch_name: The name of the branch to check if it is the first commit.
+    :return: True if the branch is the first commit, False otherwise.
+
     """
     try:
-        remote_url = run_git_command("git remote -v")
-        if "github" in remote_url:
-            run_git_command("git fetch")
-            main_branch = get_default_branch()
-            full_branch_name = f"origin/{branch_name}"
-            default_branch_name = f"origin/{main_branch}"
-
-            first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
-            first_commit_message = run_git_command(f"git log --format=%B -n 1 {first_commit_in_branch}")
-
-            commits_diff = run_git_command(f"git rev-list --count {default_branch_name}..{full_branch_name}")
-
-            return "initial commit" in first_commit_message.lower() and commits_diff == "0"
-
-        else:
-            full_branch_name = f"origin/{branch_name}"
-            first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
-            last_commit_in_repo = run_git_command("git rev-parse HEAD")
-            return first_commit_in_branch == last_commit_in_repo
-
+        run_git_command("git fetch")
+        full_branch_name = f"origin/{branch_name}"
+        first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
+        last_commit_in_repo = run_git_command("git rev-parse HEAD")
+        return first_commit_in_branch == last_commit_in_repo
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
-
 
 
 def is_first_commit_in_fix_branch(fix_branch):
