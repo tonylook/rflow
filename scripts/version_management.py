@@ -201,16 +201,31 @@ def extract_branch_name(source_branch):
 
 def is_first_commit_in_branch(branch_name):
     """
-    :param branch_name: The name of the branch to check if it is the first commit.
-    :return: True if the branch is the first commit, False otherwise.
-
+    Check if the branch is the first commit on GitHub and if it is an 'initial commit'.
+    :param branch_name: The name of the branch to check.
+    :return: True if it's the first commit on GitHub with no differences from main, False otherwise.
     """
     try:
-        run_git_command("git fetch")
-        full_branch_name = f"origin/{branch_name}"
-        first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
-        last_commit_in_repo = run_git_command("git rev-parse HEAD")
-        return first_commit_in_branch == last_commit_in_repo
+        remote_url = run_git_command("git remote -v")
+        if "github" in remote_url:
+            run_git_command("git fetch")
+            main_branch = get_default_branch()
+            full_branch_name = f"origin/{branch_name}"
+            default_branch_name = f"origin/{main_branch}"
+
+            first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
+            first_commit_message = run_git_command(f"git log --format=%B -n 1 {first_commit_in_branch}")
+
+            commits_diff = run_git_command(f"git rev-list --count {default_branch_name}..{full_branch_name}")
+
+            return "initial commit" in first_commit_message.lower() and commits_diff == "0"
+
+        else:
+            full_branch_name = f"origin/{branch_name}"
+            first_commit_in_branch = run_git_command(f"git rev-list --max-parents=0 {full_branch_name}")
+            last_commit_in_repo = run_git_command("git rev-parse HEAD")
+            return first_commit_in_branch == last_commit_in_repo
+
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
