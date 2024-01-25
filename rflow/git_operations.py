@@ -59,3 +59,14 @@ def handle_git_error(e):
     """
     click.echo(f'Error: {str(e)}', err=True)
     raise click.Abort()
+
+def check_if_git_repo():
+    """
+    Check if the current directory is a git repository.
+    Raises an error and aborts if it's not a git repository.
+    """
+    try:
+        git.Repo('.')
+    except git.InvalidGitRepositoryError:
+        click.echo("Error: The current directory is not a Git repository.", err=True)
+        raise click.Abort()

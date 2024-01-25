@@ -22,6 +22,7 @@ def cli(ctx):
     """
     if ctx.invoked_subcommand is None:
         click.echo("rflow: try 'rflow --help' for more information")
+    git_operations.check_if_git_repo()
 
 
 @cli.command()
