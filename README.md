@@ -5,7 +5,15 @@
 ---
 
 ## 📦 Installation
+### 🍺 Install with Homebrew
 
+You can also install `rflow` using [Homebrew](https://brew.sh/), a package manager for macOS (and Linux) without worrying about dependencies:
+
+```bash
+brew tap tonylook/rflow
+brew install rflow
+````
+### Install Without Homebrew
 Before installing `rflow`, ensure you have Python and Git installed on your system. `rflow` is developed and tested primarily on Python 3.
 
 ### Clone the repository
