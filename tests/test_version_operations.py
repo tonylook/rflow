@@ -7,7 +7,8 @@ import os
 import click
 
 from rflow.version_operations import (read_current_version, read_next_version, increment_major_version,
-                                 increment_minor_version, increment_patch_version, check_version_info_exists, init_version, get_latest_release_version)
+                                      increment_minor_version, increment_patch_version, check_version_info_exists,
+                                      init_version, get_latest_release_version)
 
 
 class TestVersionOperations(unittest.TestCase):
@@ -49,7 +50,6 @@ class TestVersionOperations(unittest.TestCase):
     def test_init_version(self):
         self.assertEqual(init_version(), '1.0.0')
 
-
     def test_get_latest_release_version(self):
         class FakeBranch:
             def __init__(self, name):
@@ -62,6 +62,7 @@ class TestVersionOperations(unittest.TestCase):
             FakeBranch('release/v1.3.0'),
         ]
         self.assertEqual(get_latest_release_version(fake_repo), '1.3.0')
+
 
 if __name__ == '__main__':
     unittest.main()

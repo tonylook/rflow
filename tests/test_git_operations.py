@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from rflow.git_operations import (is_release_branch, get_main_branch_name)
 
+
 class TestGitOperations(unittest.TestCase):
     def test_is_release_branch(self):
         self.assertTrue(is_release_branch('release/v1.0.0'))

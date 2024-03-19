@@ -1,4 +1,3 @@
-import json
 import os
 import datetime
 import click
@@ -13,10 +12,8 @@ def cli(ctx):
     """
     :param ctx: the click Context object
     :return: None
-
-    This method is a click command group with the `invoke_without_command=True` option. It allows the CLI to be invoked without any subcommand. If no subcommand is provided, it will display
-    * a message using `click.echo()`.
-
+    This method is a click command group with the `invoke_without_command=True` option. It allows the CLI to be invoked
+    without any subcommand. If no subcommand is provided, it will display a message using `click.echo()`.
     Example usage:
         cli()
     """
@@ -29,18 +26,31 @@ def cli(ctx):
 def release():
     """
     Release Method
-
     This method is used to create and push a release branch on a Git repository.
-
     :return: None
     """
     try:
         repo = git_operations.initialize_repo()
         main_branch_name = git_operations.get_main_branch_name(repo)
         git_operations.check_active_branch(repo, main_branch_name)
-        version = version_operations.read_next_version()
-        release_branch = f'release/v{version}'
+        target_version = version_operations.read_next_version()
+        # Update version.info on main branch
+        current_version = target_version
+        next_version = version_operations.increment_minor_version(target_version)
+        version_operations.update_version_info('version.info', current_version, next_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on main branch')
+        # Push changes to main branch
+        repo.git.push('--set-upstream', 'origin', main_branch_name)
+        # Create and switch to release branch
+        release_branch = f'release/v{target_version}'
         repo.git.checkout(main_branch_name, b=release_branch)
+        # Update version.info on release branch
+        next_version = version_operations.increment_patch_version(target_version)
+        version_operations.update_version_info('version.info', current_version, next_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on release branch')
+        # Push release branch
         repo.git.push('--set-upstream', 'origin', release_branch)
         click.echo(f'Release branch {release_branch} created and pushed.')
     except GitError as e:
@@ -51,7 +61,6 @@ def release():
 def major():
     """
     Create and push a major release branch.
-
     :return: None
     """
     try:
@@ -60,8 +69,22 @@ def major():
         git_operations.check_active_branch(repo, main_branch_name)
         current_version = version_operations.read_current_version()
         major_version = version_operations.increment_major_version(current_version)
+        # Update version.info on main branch
+        next_minor_version = version_operations.increment_minor_version(major_version)
+        version_operations.update_version_info('version.info', major_version, next_minor_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on main branch')
+        # Push changes to main branch
+        repo.git.push('--set-upstream', 'origin', main_branch_name)
+        # Create and switch to major release branch
         major_release_branch = f'release/v{major_version}'
         repo.git.checkout(main_branch_name, b=major_release_branch)
+        # Update version.info on major release branch
+        next_patch_version = version_operations.increment_patch_version(major_version)
+        version_operations.update_version_info('version.info', major_version, next_patch_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on major release branch')
+        # Push major release branch
         repo.git.push('--set-upstream', 'origin', major_release_branch)
         click.echo(f'Major release branch {major_release_branch} created and pushed.')
     except GitError as e:
@@ -76,12 +99,10 @@ def fix(tag_version, bug_description):
     :param tag_version: The version number of the tag to fix the bug from.
     :param bug_description: A description of the bug that is being fixed.
     :return: None
-
-    This method is a command line interface command that creates a new fix branch and pushes it to the remote repository. The fix branch is created from a release branch corresponding to
-    * the provided tag version.
-
+    This method creates a new fix branch and pushes it to the remote repository.
+    The fix branch is created from a release branch corresponding to the provided tag version.
     Example usage:
-    fix("1.0.3", "bug-fix")
+    rflow fix 1.0.3 bug-fix
     """
     try:
         repo = git_operations.initialize_repo()
@@ -89,14 +110,24 @@ def fix(tag_version, bug_description):
         if tag not in repo.tags:
             click.echo(f"Tag {tag} not found.", err=True)
             raise click.Abort()
-        release_branch_name = f"release/v{tag_version.rsplit('.', 1)[0]}.0"
-        if release_branch_name in repo.branches:
-            repo.git.checkout(release_branch_name)
-        else:
-            click.echo(f"Tag {tag} is not on a release branch. Please proceed manually.")
-            return
+        repo.git.checkout(tag)
+        current_version = version_operations.read_next_version()
+        release_branch_name = f"release/v{current_version[:-2]}.0"
+        if release_branch_name not in repo.branches:
+            click.echo(f"Release branch {release_branch_name} does not exist for tag {tag}. Creating it.")
+            repo.git.checkout('-b', release_branch_name)
+        repo.git.checkout(release_branch_name)
+        next_patch_version = version_operations.increment_patch_version(current_version)
+        version_operations.update_version_info('version.info', current_version, next_patch_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on release branch')
+        repo.git.push('--set-upstream', 'origin', release_branch_name)
+        click.echo(f'Release branch {release_branch_name} updated and pushed.')
         fix_branch_name = f'fix/{bug_description}-from-{tag_version}'
-        repo.git.checkout('HEAD', b=fix_branch_name)
+        repo.git.checkout(tag, b=fix_branch_name)
+        version_operations.update_version_info('version.info', current_version, next_patch_version)
+        repo.git.add('version.info')
+        repo.git.commit('-m', 'Update version.info on fix branch')
         repo.git.push('--set-upstream', 'origin', fix_branch_name)
         click.echo(f'Fix branch {fix_branch_name} created and pushed.')
     except GitError as e:
@@ -107,7 +138,6 @@ def fix(tag_version, bug_description):
 def init():
     """
     Initializes the repository and creates a version.info file with the current and next versions.
-
     :return: None
     """
     try:
@@ -124,13 +154,9 @@ def init():
         else:
             current_version = version_operations.init_version()
             next_version = current_version
-        version_info = {
-            "currentVersion": current_version,
-            "nextVersion": next_version
-        }
-        with open('version.info', 'w') as file:
-            json.dump(version_info, file, indent=4)
-        click.echo(f"Initialized version.info with version: {version_info['currentVersion']}")
+        # Update version.info file
+        version_operations.update_version_info('version.info', current_version, next_version)
+        click.echo(f"Initialized version.info with version: {current_version}")
     except (GitError, Exception) as e:
         git_operations.handle_git_error(e)
 
@@ -139,7 +165,6 @@ def init():
 def version():
     """
     Get the current version from the 'version.info' file.
-
     :return: None
     """
     try:
@@ -154,7 +179,6 @@ def version():
 def snap():
     """
     Create a snapshot tag and push it to the remote repository.
-
     :return: None
     """
     try:
@@ -175,27 +199,13 @@ def snap():
         raise click.Abort()
 
 
-
 @cli.command()
 @click.option('-f', '--force', is_flag=True, help='Force tag creation, overwriting if it already exists.')
 def tag(force):
     """
     :param force: (boolean) Whether to force tag creation, overwriting if it already exists.
     :return: None
-
-    This method is a command-line interface command for creating and pushing tags in a Git repository. The optional `--force` flag can be used to force tag creation, overwriting the tag
-    * if it already exists. The method performs the following steps:
-
-    1. Initializes the Git repository.
-    2. Checks if the current branch is a release branch.
-    3. Reads the current version from the project.
-    4. Constructs the tag name using the current version.
-    5. Checks if the tag already exists in the repository.
-       - If the `--force` flag is used, the existing tag is deleted and a new tag is created with the same name.
-       - If the `--force` flag is not used, a message is displayed and the method returns without creating the tag.
-    6. Creates the new tag and pushes it to the remote repository.
-
-    If any error occurs during the execution of the method, it is caught and handled by the `handle_git_error` function.
+    This method is for creating and pushing tags. The optional `--force` flag can be used to overwrite the tag.
     """
     try:
         repo = git_operations.initialize_repo()
@@ -203,8 +213,8 @@ def tag(force):
         if not git_operations.is_release_branch(branch_name):
             click.echo("Tag command must be run from a release branch.")
             raise click.Abort()
-        version = version_operations.read_current_version()
-        tag_name = f'v{version}'
+        target_version = version_operations.read_current_version()
+        tag_name = f'v{target_version}'
         if tag_name in repo.tags:
             if force:
                 click.echo(f"Tag {tag_name} already exists. Overwriting due to --force option.")
