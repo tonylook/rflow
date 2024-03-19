@@ -23,18 +23,18 @@ Welcome to the latest release of `rflow`! This document outlines the key feature
 For users who want to verify the integrity of the release package, here is the SHA256 checksum for the `.tar.gz` file of this release:
 
 ```
-[Your SHA256 Checksum Value Here]
+[HA256 Checksum Value Here]
 ```
 
 To verify the checksum, use the following command on your file:
 
 - **Linux/macOS:**
   ```bash
-  sha256sum filename.tar.gz
+  shasum -a 256 rflow-X.Y.Z.tar.gz
   ```
 - **Windows:**
   ```powershell
-  Get-FileHash filename.tar.gz -Algorithm SHA256
+  Get-FileHash rflow-X.Y.Z.tar.gz -Algorithm SHA256
   ```
 
 ---
